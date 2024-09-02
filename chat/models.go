@@ -2,82 +2,71 @@ package chat
 
 import (
 	"log"
-	"time"
 
 	"github.com/aabuezo/go-simple-chat/config"
 )
 
-type User struct {
-	ID       int
-	Name     string
-	Email    string
-	Password []byte
-}
-
-type Message struct {
-	ID      int
-	Posted  time.Time
-	From    int
-	To      int
-	Message string
-}
-
-func CreateTableUsers() {
-
-	query := `CREATE TABLE IF NOT EXISTS users (
-		user_id  INT GENERATED ALWAYS AS IDENTITY,
-		name     VARCHAR(50) NOT NULL,
-		email    VARCHAR(50) NOT NULL,
-		password VARCHAR(50) NOT NULL,
-		PRIMARY KEY(user_id)
-	);`
-	_, err := config.DB.Query(query)
+func GetUser(username string) config.User {
+	log.Printf("in GetUser(%s)\n", username)
+	rows, err := config.DB.Query(`SELECT * FROM users WHERE username LIKE $1;`, username)
 	if err != nil {
-		log.Fatalln("Could not create `users` table.")
 		panic(err)
 	}
+	dbUser := config.User{}
+	for rows.Next() {
+		rows.Scan(&dbUser.ID, &dbUser.Username, &dbUser.Password)
+		// log.Printf("dbUser.ID: %d, dbUser.Username: %s, dbUser.Password: %s\n", dbUser.ID, dbUser.Username, dbUser.Password)
+	}
+	return dbUser // if not in DB returns zero value
 }
 
-func CreateTableMessages() {
-
-	query := `CREATE TABLE IF NOT EXISTS messages (
-		message_id  INT GENERATED ALWAYS AS IDENTITY,
-		posted      TIMESTAMPTZ,
-		from_id     INT    NOT NULL,
-		to_id       INT    NOT NULL,
-		message     VARCHAR(255) NOT NULL,
-		PRIMARY KEY(message_id),
-		CONSTRAINT fk_from
-			FOREIGN KEY(from_id) 
-			REFERENCES users(user_id),
-		CONSTRAINT fk_to
-			FOREIGN KEY(to_id) 
-			REFERENCES users(user_id)
-		);`
-	_, err := config.DB.Query(query)
+func SaveMessage(from config.User, to config.User, message string) error {
+	query := `INSERT INTO messages (from_id, to_id, message)
+	VALUES ($1, $2, $3)`
+	_, err := config.DB.Query(query, from.ID, to.ID, message)
 	if err != nil {
-		log.Fatalln("Could not create `messages` table.")
+		log.Println("Error when saving message to the DB")
+		return err
+	}
+	log.Println("Message saved to the DB")
+	return nil
+}
+
+func GetMessages(from config.User, to config.User) []config.Message {
+
+	log.Printf("GetMessages(%s)\n", to.Username)
+
+	query := `SELECT * FROM messages WHERE from_id=$1 OR to_id=$2;`
+	rows, err := config.DB.Query(query, from.ID, to.ID)
+	if err != nil {
+		log.Println("Error when searching for messages")
 		panic(err)
 	}
+	var messages = []config.Message{}
+	for rows.Next() {
+		message := config.Message{}
+		err := rows.Scan(&message.ID, &message.From, &message.To, &message.Message)
+		if err != nil {
+			break
+		}
+
+		log.Printf("From: %d To: %d -> Message: %s\n", message.From, message.To, message.Message)
+
+		messages = append(messages, message)
+	}
+	return messages
 }
 
-func CreateUsers() {
-
-	query := `INSERT INTO users (name, email, password) 
-	VALUES 
-		('John', 'john@mail.com', 'test'),
-		('Barney', 'barney@mail.com', 'test'),
-		('Anna', 'anna@mail.com', 'test'),
-		('Janeth', 'janeth@mail.com', 'test'),
-		('Luka', 'luka@mail.com', 'test'),
-		('Stacey', 'stacey@mail.com', 'test')`
-	_, err := config.DB.Query(query)
+func GetUsers() []config.User {
+	rows, err := config.DB.Query(`SELECT * FROM users;`)
 	if err != nil {
-		log.Fatalln("Could not populate table `users`.")
 		panic(err)
 	}
-}
-
-func GetUsers() {
-
+	users := []config.User{}
+	for rows.Next() {
+		user := config.User{}
+		rows.Scan(&user.ID, &user.Username, &user.Password)
+		users = append(users, user)
+	}
+	return users
 }

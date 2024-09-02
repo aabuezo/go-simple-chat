@@ -9,10 +9,23 @@
         <h1>Simple Chat</h1>
         <h2>Chat Room</h2>
 
+        <main>
+            <ul>
+                {{range .}}
+                <li>{{.From}}: {{.Message}}</li>
+                {{end}}
+            </ul>
+        </main>
         <footer>
-            <form action="/chat" method="post">
+            <form action="/room/message" method="POST">
                 <div>
                     <div>
+                        <input
+                            type="text"
+                            name="to"
+                            id="to"
+                            placeholder="Barney"
+                        />
                         <input
                             type="text"
                             name="message"
@@ -21,10 +34,13 @@
                         />
                     </div>
                     <div>
-                        <input type="button" value="Send Message" />
+                        <input type="submit" value="Send Message" />
                     </div>
                 </div>
             </form>
         </footer>
+        <div>
+            <h2><a href="/logout">log out</a></h2>
+        </div>
     </body>
 </html>

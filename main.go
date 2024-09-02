@@ -8,8 +8,12 @@ import (
 
 func main() {
 
-	http.HandleFunc("/", chat.PostLogin)
-	http.HandleFunc("/chat", chat.PostMessage)
+	http.HandleFunc("/", chat.GetHome)
+	http.HandleFunc("/login", chat.PostLogin)
+	http.HandleFunc("/logout", chat.Logout)
+	http.HandleFunc("/room", chat.GetChatRoom)
+	http.HandleFunc("/room/message", chat.PostMessage)
+	http.Handle("/favicon.ico", http.NotFoundHandler())
 
 	http.ListenAndServe(":8090", nil)
 }
