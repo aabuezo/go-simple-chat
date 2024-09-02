@@ -20,10 +20,17 @@ var Messages = []config.Message{}
 var Sessions = map[string]string{}
 
 func GetHome(w http.ResponseWriter, req *http.Request) {
+
 	if req.Method != http.MethodGet {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
+
+	if !config.InitialData {
+		config.InitDB()
+		config.InitialData = true
+	}
+
 	http.Redirect(w, req, "/login", http.StatusSeeOther)
 }
 

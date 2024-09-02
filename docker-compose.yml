@@ -1,7 +1,21 @@
-# Use postgres/example user/password credentials
+# Use postgres/postgres user/password credentials
 version: '3.9'
 
+networks:
+  fullstack:
+    external: true
+
 services:
+  app:
+    container_name: go-simple-chat
+    build: .
+    ports:
+      - 8090:8090
+    restart: on-failure
+    depends_on:
+      - db
+    networks:
+      - fullstack
 
   db:
     image: postgres
@@ -17,13 +31,16 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bookstore
+      POSTGRES_DB: chat
     ports:
       - 5432:5432
+    networks:
+      - fullstack
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 8080:8080
-
+    networks:
+      - fullstack

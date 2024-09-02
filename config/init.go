@@ -11,6 +11,7 @@ import (
 
 var DB *sql.DB
 var TPL *template.Template
+var InitialData = false
 
 type User struct {
 	ID       int
@@ -29,7 +30,7 @@ type Message struct {
 // ALTER USER golang WITH SUPERUSER;
 // GRANT ALL PRIVILEGES ON DATABASE chat to golang;
 
-func init() {
+func InitDB() {
 	var err error
 	DB, err = sql.Open("postgres", "postgres://postgres:postgres@localhost/chat?sslmode=disable")
 	if err != nil {
@@ -45,7 +46,9 @@ func init() {
 	CreateTableMessages()
 	CreateUsers()
 	CreateMessages()
+}
 
+func init() {
 	TPL = template.Must(template.ParseGlob("templates/*"))
 }
 
