@@ -97,6 +97,25 @@ func Authenticate(username, password string) bool {
 	return err == nil
 }
 
+func GetChats(w http.ResponseWriter, req *http.Request) {
+	if IsOpenSession(req) {
+		sID, err := req.Cookie("chat_sid")
+		if err != nil {
+			http.Redirect(w, req, "/login", http.StatusForbidden)
+			return
+		}
+
+		username := Sessions[sID.Value]
+		log.Println("in GetChats() username: ", username)
+		user := GetUser(username)
+		messages := GetMessages(user, user)
+
+		textMessages := messageIDsToText(messages)
+
+		config.TPL.ExecuteTemplate(w, "chats.htm", textMessages)
+	}
+}
+
 func GetChatRoom(w http.ResponseWriter, req *http.Request) {
 	if IsOpenSession(req) {
 		sID, err := req.Cookie("chat_sid")
@@ -107,15 +126,8 @@ func GetChatRoom(w http.ResponseWriter, req *http.Request) {
 
 		// username := Sessions[strings.Split(sID.String(), "=")[1]] // Aca estaba el problema!!!
 		username := Sessions[sID.Value] // Aca estaba el problema!!!
-		log.Println("in GetChatRoom() username: ", username)
-		user := GetUser(username)
-		messages := GetMessages(user, user)
 
-		// log.Println("GetChatRoom() messages: ", messages)
-
-		textMessages := messageIDsToText(messages)
-
-		config.TPL.ExecuteTemplate(w, "chat-room.htm", textMessages)
+		config.TPL.ExecuteTemplate(w, "chat-room.htm", username)
 	}
 }
 

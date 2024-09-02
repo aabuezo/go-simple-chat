@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script>
+            function scrollToBottom() {
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+
+            window.onload = scrollToBottom;
+        </script>
+    </head>
+    <body>
+        <main>
+            <ul>
+                {{range .}}
+                <li><strong>{{.From}} to {{.To}}:</strong> {{.Message}}</li>
+                {{end}}
+            </ul>
+        </main>
+    </body>
+</html>

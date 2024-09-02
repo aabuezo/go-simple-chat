@@ -3,18 +3,31 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Simple Chat</title>
+        <style>
+            iframe {
+                border: none;
+                width: 100%;
+                height: 200px;
+            }
+        </style>
+        <script>
+            function refreshIframe() {
+                const iframe = document.getElementById("messagesFrame");
+                iframe.src = iframe.src;
+            }
+
+            setInterval(
+                refreshIframe,
+                1500
+            ); /* updates chat every 1.5 seconds */
+        </script>
     </head>
     <body>
         <h1>Simple Chat</h1>
-        <h2>Chat Room</h2>
+        <h2>User: {{.}}</h2>
 
         <main>
-            <ul>
-                {{range .}}
-                <li>{{.From}}: {{.Message}}</li>
-                {{end}}
-            </ul>
+            <iframe id="messagesFrame" src="/room/messages"></iframe>
         </main>
         <footer>
             <form action="/room/message" method="POST">

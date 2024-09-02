@@ -13,6 +13,7 @@ func main() {
 	http.HandleFunc("/logout", chat.Logout)
 	http.HandleFunc("/room", chat.GetChatRoom)
 	http.HandleFunc("/room/message", chat.PostMessage)
+	http.HandleFunc("/room/messages", chat.GetChats)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 
 	http.ListenAndServe(":8090", nil)
