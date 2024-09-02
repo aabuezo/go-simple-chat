@@ -10,7 +10,7 @@ services:
     container_name: go-simple-chat
     build: .
     ports:
-      - 8090:8090
+      - 80:80
     restart: on-failure
     depends_on:
       - db
@@ -41,6 +41,6 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - 8090:8080
     networks:
       - fullstack
