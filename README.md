@@ -5,4 +5,4 @@
 
 `docker compose up -d`
 
-Open a web broser and connect to `http://localhost`
+Open a web broser and connect to `http://localhost:8090/`

@@ -16,5 +16,5 @@ func main() {
 	http.HandleFunc("/room/messages", chat.GetChats)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":8090", nil)
 }
