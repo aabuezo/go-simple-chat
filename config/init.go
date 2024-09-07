@@ -32,7 +32,8 @@ type Message struct {
 
 func InitDB() {
 	var err error
-	DB, err = sql.Open("postgres", "postgres://postgres:postgres@db:5432/chat?sslmode=disable")
+	// DB, err = sql.Open("postgres", "postgres://postgres:postgres@db:5432/chat?sslmode=disable")
+	DB, err = sql.Open("postgres", "postgres://postgres:postgres@localhost/chat?sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +46,7 @@ func InitDB() {
 	CreateTableUsers()
 	CreateTableMessages()
 	CreateUsers()
-	CreateMessages()
+	// CreateMessages()
 }
 
 func init() {

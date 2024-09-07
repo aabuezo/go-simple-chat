@@ -4,22 +4,148 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Simple Chat</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                /* background-color: #f4f4f4; */
+                background-color: #444;
+                font-family: "Poppins", sans-serif;
+                line-height: 1.6;
+            }
+
+            header {
+                color: #f1f1f1;
+                background-color: #333;
+                padding: 20px 20px;
+                border-bottom: 2px solid #c26101;
+            }
+
+            header h1 {
+                font-size: 40px;
+                font-weight: 300;
+            }
+
+            header span {
+                font-weight: 600;
+                color: #de5e0e;
+            }
+
+            main {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .container {
+                background-color: #333;
+                margin-top: 220px;
+                /* padding: 10px 10px; */
+                width: 500px;
+                padding: 10px 50px 50px;
+                box-shadow: 4px 5px 8px 4px rgba(0, 0, 0, 0.1);
+                border-radius: 15px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .container form h3 {
+                color: #de5e0e;
+                font-size: 27px;
+                font-weight: 500;
+                text-align: left;
+                padding-left: 10px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+            }
+
+            .container form p {
+                font-size: 14px;
+                color: #f1f1f1;
+                padding-left: 10px;
+            }
+
+            .form-group {
+                width: 100%;
+                color: #f1f1f1;
+                font-size: 16px;
+                padding: 15px 10px;
+                /* margin-bottom: 10px; */
+            }
+
+            .form-group label {
+                width: 100%;
+                text-align: left;
+                padding-left: 10px;
+                font-size: 16px;
+            }
+
+            .form-group input {
+                width: 100%;
+                font-size: 16px;
+                padding: 10px 10px;
+                /* margin: 0 10px; */
+                border: none;
+            }
+
+            .form-group input[type="submit"] {
+                color: #fff;
+                background: linear-gradient(
+                    90deg,
+                    rgba(194, 97, 1, 1) 29%,
+                    rgba(227, 132, 2, 1) 65%
+                );
+            }
+
+            .form-group input[type="submit"]:hover {
+                opacity: 0.8;
+                cursor: pointer;
+            }
+        </style>
     </head>
     <body>
-        <h1>Simple Chat</h1>
+        <header>
+            <h1>Just a <span>Simple Chat</span> :)</h1>
+        </header>
 
-        <form method="post">
-            <div>
-                <label for="username">Username</label>
-                <input type="text" name="username" id="username" />
+        <main>
+            <div class="container">
+                <form method="post">
+                    <h3>Sign In</h3>
+                    <p>Simply Chat with your friends everywhere!</p>
+                    <div class="form-group">
+                        <!-- <label for="username">Username</label> -->
+                        <input
+                            type="text"
+                            name="username"
+                            id="username"
+                            placeholder="Enter your username here..."
+                        />
+                    </div>
+                    <div class="form-group">
+                        <!-- <label for="password">Password</label> -->
+                        <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            placeholder="Enter your password here..."
+                        />
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Login Here!" />
+                    </div>
+                </form>
             </div>
-            <div>
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password" />
-            </div>
-            <div>
-                <input type="submit" value="Login" />
-            </div>
-        </form>
+        </main>
     </body>
 </html>
