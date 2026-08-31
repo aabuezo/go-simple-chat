@@ -59,7 +59,7 @@ func HandleWebSocket(w http.ResponseWriter, req *http.Request) {
 	room.Unlock()
 
 	go c.writePump()
-	c.send <- roomState{Type: "state", Messages: currentMessages(username), Users: connectedUsers()}
+	c.send <- roomState{Type: "state", Contacts: connectedContacts()}
 	broadcastUsers()
 	c.readPump()
 }
@@ -76,20 +76,30 @@ func (c *client) readPump() {
 	for {
 		var input incomingMessage
 		if err := c.conn.ReadJSON(&input); err != nil {
+			log.Printf("websocket read for %s: %v", c.username, err)
 			return
 		}
 		if input.Type != "message" || input.Message == "" || input.To == "" {
+			if input.Type == "history" && input.To != "" {
+				log.Printf("loading conversation for %s with %s", c.username, input.To)
+				c.send <- roomState{Type: "history", ChatWith: input.To, Messages: conversationMessages(c.username, input.To)}
+			}
 			continue
 		}
 
 		fromUser := GetUser(c.username)
 		toUser := GetUser(input.To)
-		if toUser.ID == 0 || SaveMessage(fromUser, toUser, input.Message) != nil {
+		if fromUser.ID == 0 || toUser.ID == 0 {
+			log.Printf("message rejected: %s -> %s, user not found", c.username, input.To)
+			continue
+		}
+		if err := SaveMessage(fromUser, toUser, input.Message); err != nil {
+			log.Printf("message rejected: %s -> %s: %v", c.username, input.To, err)
 			continue
 		}
 
 		message := TextMessage{From: c.username, To: input.To, Message: input.Message}
-		broadcast(roomState{Type: "message", Message: &message})
+		broadcastMessage(message)
 	}
 }
 
@@ -105,17 +115,43 @@ func (c *client) writePump() {
 func broadcast(state roomState) {
 	room.RLock()
 	defer room.RUnlock()
+	delivered := 0
 	for c := range room.clients {
 		select {
 		case c.send <- state:
+			delivered++
 		default:
 			log.Printf("dropping websocket event for %s", c.username)
 		}
 	}
+	if state.Type == "message" {
+		log.Printf("broadcast message to %d websocket clients", delivered)
+	}
 }
 
 func broadcastUsers() {
-	broadcast(roomState{Type: "users", Users: connectedUsers()})
+	broadcast(roomState{Type: "contacts", Contacts: connectedContacts()})
+}
+
+func broadcastMessage(message TextMessage) {
+	room.RLock()
+	defer room.RUnlock()
+	delivered := 0
+	for c := range room.clients {
+		if c.username != message.From && c.username != message.To {
+			continue
+		}
+		messageForClient := message
+		messageForClient.Mine = message.From == c.username
+		state := roomState{Type: "message", Message: &messageForClient}
+		select {
+		case c.send <- state:
+			delivered++
+		default:
+			log.Printf("dropping websocket message for %s", c.username)
+		}
+	}
+	log.Printf("broadcast message to %d websocket clients", delivered)
 }
 
 func connectedUsers() []string {
@@ -134,7 +170,41 @@ func connectedUsers() []string {
 	return users
 }
 
+func connectedContacts() []Contact {
+	online := make(map[string]bool)
+	room.RLock()
+	for c := range room.clients {
+		online[c.username] = true
+	}
+	room.RUnlock()
+
+	users := GetUsers()
+	contacts := make([]Contact, 0, len(users))
+	for _, user := range users {
+		contacts = append(contacts, Contact{Username: user.Username, Online: online[user.Username]})
+	}
+	sort.Slice(contacts, func(i, j int) bool { return contacts[i].Username < contacts[j].Username })
+	return contacts
+}
+
 func currentMessages(username string) []TextMessage {
 	user := GetUser(username)
-	return messageIDsToText(GetMessages(user, user))
+	messages := messageIDsToText(GetMessages(user, user))
+	for i := range messages {
+		messages[i].Mine = messages[i].From == username
+	}
+	return messages
+}
+
+func conversationMessages(username, other string) []TextMessage {
+	first := GetUser(username)
+	second := GetUser(other)
+	if first.ID == 0 || second.ID == 0 {
+		return []TextMessage{}
+	}
+	messages := messageIDsToText(GetConversation(first, second))
+	for i := range messages {
+		messages[i].Mine = messages[i].From == username
+	}
+	return messages
 }

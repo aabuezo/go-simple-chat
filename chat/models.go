@@ -8,10 +8,11 @@ import (
 
 func GetUser(username string) config.User {
 	log.Printf("in GetUser(%s)\n", username)
-	rows, err := config.DB.Query(`SELECT * FROM users WHERE username LIKE $1;`, username)
+	rows, err := config.DB.Query(`SELECT * FROM users WHERE username = $1 ORDER BY user_id LIMIT 1;`, username)
 	if err != nil {
 		panic(err)
 	}
+	defer rows.Close()
 	dbUser := config.User{}
 	for rows.Next() {
 		rows.Scan(&dbUser.ID, &dbUser.Username, &dbUser.Password)
@@ -23,7 +24,7 @@ func GetUser(username string) config.User {
 func SaveMessage(from config.User, to config.User, message string) error {
 	query := `INSERT INTO messages (from_id, to_id, message)
 	VALUES ($1, $2, $3)`
-	_, err := config.DB.Query(query, from.ID, to.ID, message)
+	_, err := config.DB.Exec(query, from.ID, to.ID, message)
 	if err != nil {
 		log.Println("Error when saving message to the DB")
 		return err
@@ -42,6 +43,7 @@ func GetMessages(from config.User, to config.User) []config.Message {
 		log.Println("Error when searching for messages")
 		panic(err)
 	}
+	defer rows.Close()
 	var messages = []config.Message{}
 	for rows.Next() {
 		message := config.Message{}
@@ -57,11 +59,34 @@ func GetMessages(from config.User, to config.User) []config.Message {
 	return messages
 }
 
+func GetConversation(first, second config.User) []config.Message {
+	query := `SELECT message_id, from_id, to_id, message FROM messages
+		WHERE (from_id=$1 AND to_id=$2) OR (from_id=$2 AND to_id=$1)
+		ORDER BY message_id;`
+	rows, err := config.DB.Query(query, first.ID, second.ID)
+	if err != nil {
+		log.Println("Error when searching for conversation")
+		return []config.Message{}
+	}
+	defer rows.Close()
+
+	messages := []config.Message{}
+	for rows.Next() {
+		message := config.Message{}
+		if err := rows.Scan(&message.ID, &message.From, &message.To, &message.Message); err != nil {
+			continue
+		}
+		messages = append(messages, message)
+	}
+	return messages
+}
+
 func GetUsers() []config.User {
 	rows, err := config.DB.Query(`SELECT * FROM users;`)
 	if err != nil {
 		panic(err)
 	}
+	defer rows.Close()
 	users := []config.User{}
 	for rows.Next() {
 		user := config.User{}

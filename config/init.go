@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"html/template"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -32,14 +33,22 @@ type Message struct {
 
 func InitDB() {
 	var err error
-	DB, err = sql.Open("postgres", "postgres://postgres:postgres@db:5432/chat?sslmode=disable")
-	// DB, err = sql.Open("postgres", "postgres://postgres:postgres@localhost/chat?sslmode=disable")
-	if err != nil {
-		panic(err)
+	for attempt := 1; attempt <= 30; attempt++ {
+		db, openErr := sql.Open("postgres", "postgres://postgres:postgres@db:5432/chat?sslmode=disable")
+		// db, openErr := sql.Open("postgres", "postgres://postgres:postgres@localhost/chat?sslmode=disable")
+		if openErr == nil {
+			if err = db.Ping(); err == nil {
+				DB = db
+				break
+			}
+			db.Close()
+		} else {
+			err = openErr
+		}
+		log.Printf("database is not ready (attempt %d/30): %v", attempt, err)
+		time.Sleep(time.Second)
 	}
-	// defer DB.Close()
-
-	if err = DB.Ping(); err != nil {
+	if DB == nil {
 		panic(err)
 	}
 
@@ -96,14 +105,13 @@ func CreateUsers() {
 
 	bs, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.MinCost)
 	log.Println(string(bs))
-	query := `INSERT INTO users (username, password) 
-	VALUES ('John', $1),
-		('Barney', $1),
-		('Anna', $1),
-		('Janeth', $1),
-		('Luka', $1),
-		('Stacey', $1)`
-	_, err := DB.Query(query, string(bs))
+	query := `INSERT INTO users (username, password)
+	SELECT username, $1
+	FROM (VALUES ('John'), ('Barney'), ('Anna'), ('Janeth'), ('Luka'), ('Stacey')) AS default_users(username)
+	WHERE NOT EXISTS (
+		SELECT 1 FROM users WHERE users.username = default_users.username
+	)`
+	_, err := DB.Exec(query, string(bs))
 	if err != nil {
 		log.Fatalln("Could not populate table `users`.")
 		panic(err)

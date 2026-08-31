@@ -14,11 +14,18 @@ type TextMessage struct {
 	From    string `json:"from"`
 	To      string `json:"to"`
 	Message string `json:"message"`
+	Mine    bool   `json:"mine"`
+}
+
+type Contact struct {
+	Username string `json:"username"`
+	Online   bool   `json:"online"`
 }
 
 var (
 	Sessions  = map[string]string{}
 	sessionMu sync.RWMutex
+	initMu    sync.Mutex
 )
 
 func GetHome(w http.ResponseWriter, req *http.Request) {
@@ -28,10 +35,12 @@ func GetHome(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	initMu.Lock()
 	if !config.InitialData {
 		config.InitDB()
 		config.InitialData = true
 	}
+	initMu.Unlock()
 
 	http.Redirect(w, req, "/login", http.StatusSeeOther)
 }
@@ -203,6 +212,8 @@ type roomState struct {
 	Messages []TextMessage `json:"messages,omitempty"`
 	Users    []string      `json:"users,omitempty"`
 	Message  *TextMessage  `json:"message,omitempty"`
+	Contacts []Contact     `json:"contacts,omitempty"`
+	ChatWith string        `json:"chatWith,omitempty"`
 }
 
 func messageIDsToText(messages []config.Message) []TextMessage {

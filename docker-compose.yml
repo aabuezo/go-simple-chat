@@ -1,9 +1,10 @@
 # Use postgres/postgres user/password credentials
-version: '3'
-
 networks:
   fullstack:
     driver: bridge
+
+volumes:
+  db_data:
 
 services:
   app:
@@ -13,13 +14,21 @@ services:
       - 8090:8090
     restart: on-failure
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - fullstack
 
   db:
     image: postgres
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chat"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    volumes:
+      - db_data:/var/lib/postgresql
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     # or set shared memory limit when deploy via swarm stack
