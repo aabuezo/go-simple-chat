@@ -3,6 +3,7 @@ package chat
 import (
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/aabuezo/go-simple-chat/config"
 	uuid "github.com/satori/go.uuid"
@@ -10,14 +11,15 @@ import (
 )
 
 type TextMessage struct {
-	From    string
-	To      string
-	Message string
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Message string `json:"message"`
 }
 
-var ActiveUsers = []config.User{}
-var Messages = []config.Message{}
-var Sessions = map[string]string{}
+var (
+	Sessions  = map[string]string{}
+	sessionMu sync.RWMutex
+)
 
 func GetHome(w http.ResponseWriter, req *http.Request) {
 
@@ -42,10 +44,6 @@ func PostLogin(w http.ResponseWriter, req *http.Request) {
 
 		log.Printf("loggin in as: %s\n", username)
 
-		if alreadyLoggedIn(username) {
-			http.Redirect(w, req, "/room", http.StatusSeeOther)
-		}
-
 		if !Authenticate(username, password) {
 			http.Error(w, "Invalid username or password", http.StatusBadRequest)
 			return
@@ -64,9 +62,11 @@ func PostLogin(w http.ResponseWriter, req *http.Request) {
 				Name:  "chat_sid",
 				Value: sID.String(),
 			}
-			Sessions[sID.String()] = username
-			log.Printf("PostLogin: username %s added to Sessions\n", Sessions[sID.String()])
 		}
+		sessionMu.Lock()
+		Sessions[c.Value] = username
+		sessionMu.Unlock()
+		log.Printf("PostLogin: username %s added to Sessions\n", username)
 		http.SetCookie(w, c)
 
 		// redirect to chat room
@@ -78,9 +78,10 @@ func PostLogin(w http.ResponseWriter, req *http.Request) {
 }
 
 func alreadyLoggedIn(username string) bool {
-	for _, user := range ActiveUsers {
-		log.Printf("user.Username: %s\n", user.Username)
-		if user.Username == username {
+	sessionMu.RLock()
+	defer sessionMu.RUnlock()
+	for _, activeUsername := range Sessions {
+		if activeUsername == username {
 			return true
 		}
 	}
@@ -112,7 +113,9 @@ func GetChats(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		sessionMu.RLock()
 		username := Sessions[sID.Value]
+		sessionMu.RUnlock()
 		log.Println("in GetChats() username: ", username)
 		user := GetUser(username)
 		messages := GetMessages(user, user)
@@ -132,7 +135,9 @@ func GetChatRoom(w http.ResponseWriter, req *http.Request) {
 		}
 
 		// username := Sessions[strings.Split(sID.String(), "=")[1]] // Aca estaba el problema!!!
-		username := Sessions[sID.Value] // Aca estaba el problema!!!
+		sessionMu.RLock()
+		username := Sessions[sID.Value]
+		sessionMu.RUnlock()
 
 		config.TPL.ExecuteTemplate(w, "chat-room.htm", username)
 	}
@@ -157,7 +162,9 @@ func PostMessage(w http.ResponseWriter, req *http.Request) {
 		}
 
 		// from := Sessions[strings.Split(sID.String(), "=")[1]]
+		sessionMu.RLock()
 		from := Sessions[sID.Value]
+		sessionMu.RUnlock()
 		log.Printf("PostMessage() from: %s\n", from)
 
 		to := req.FormValue("to")
@@ -175,7 +182,11 @@ func PostMessage(w http.ResponseWriter, req *http.Request) {
 func Logout(w http.ResponseWriter, req *http.Request) {
 	c, _ := req.Cookie("chat_sid")
 	// delete the session
-	delete(Sessions, c.Value)
+	if c != nil {
+		sessionMu.Lock()
+		delete(Sessions, c.Value)
+		sessionMu.Unlock()
+	}
 	// remove the cookie
 	c = &http.Cookie{
 		Name:   "chat_sid",
@@ -185,6 +196,13 @@ func Logout(w http.ResponseWriter, req *http.Request) {
 	http.SetCookie(w, c)
 
 	http.Redirect(w, req, "/login", http.StatusSeeOther)
+}
+
+type roomState struct {
+	Type     string        `json:"type"`
+	Messages []TextMessage `json:"messages,omitempty"`
+	Users    []string      `json:"users,omitempty"`
+	Message  *TextMessage  `json:"message,omitempty"`
 }
 
 func messageIDsToText(messages []config.Message) []TextMessage {

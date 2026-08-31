@@ -12,6 +12,7 @@ func main() {
 	http.HandleFunc("/login", chat.PostLogin)
 	http.HandleFunc("/logout", chat.Logout)
 	http.HandleFunc("/room", chat.GetChatRoom)
+	http.HandleFunc("/room/ws", chat.HandleWebSocket)
 	http.HandleFunc("/room/message", chat.PostMessage)
 	http.HandleFunc("/room/messages", chat.GetChats)
 	http.Handle("/favicon.ico", http.NotFoundHandler())

@@ -1,56 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <style>
-            iframe {
-                border: none;
-                width: 100%;
-                height: 200px;
-            }
-        </style>
-        <script>
-            function refreshIframe() {
-                const iframe = document.getElementById("messagesFrame");
-                iframe.src = iframe.src;
-            }
-
-            setInterval(refreshIframe, 2000); /* updates chat every 3 seconds */
-        </script>
-    </head>
-    <body>
-        <h1>Simple Chat</h1>
-        <h2>User: {{.}}</h2>
-
-        <main>
-            <iframe id="messagesFrame" src="/room/messages"></iframe>
-        </main>
-        <footer>
-            <form action="/room/message" method="POST">
-                <div>
-                    <div>
-                        <input
-                            type="text"
-                            name="to"
-                            id="to"
-                            placeholder="Barney"
-                        />
-                        <input
-                            type="text"
-                            name="message"
-                            id="message"
-                            placeholder="Enter your message here..."
-                        />
-                    </div>
-                    <div>
-                        <input type="submit" value="Send Message" />
-                    </div>
-                </div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { min-height: 100vh; background: #444; color: #f1f1f1; font-family: "Poppins", sans-serif; }
+        header { padding: 20px 5%; background: #333; border-bottom: 2px solid #c26101; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: clamp(24px, 4vw, 40px); font-weight: 300; } header span { color: #de5e0e; font-weight: 600; }
+        header a { color: #f1f1f1; text-decoration: none; font-size: 14px; } header a:hover { color: #de5e0e; }
+        .layout { width: min(1100px, 92%); height: min(700px, calc(100vh - 150px)); min-height: 520px; margin: 45px auto; display: grid; grid-template-columns: 245px 1fr; background: #333; border-radius: 15px; overflow: hidden; box-shadow: 4px 5px 18px rgba(0,0,0,.25); }
+        aside { padding: 28px 20px; background: #292929; border-right: 1px solid #484848; } aside h2 { font-size: 16px; font-weight: 500; margin-bottom: 18px; } aside h2 span { color: #de5e0e; }
+        #users { list-style: none; } #users li { padding: 10px 12px; margin-bottom: 6px; border-radius: 8px; color: #ddd; font-size: 14px; } #users li::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 9px; border-radius: 50%; background: #de5e0e; }
+        section { min-width: 0; display: flex; flex-direction: column; } .room-title { padding: 24px 30px; border-bottom: 1px solid #484848; } .room-title h2 { font-size: 21px; font-weight: 500; } .room-title p { color: #aaa; font-size: 13px; }
+        #messages { flex: 1; overflow-y: auto; padding: 25px 30px; list-style: none; } #messages li { width: fit-content; max-width: 75%; padding: 10px 15px; margin-bottom: 13px; border-radius: 12px 12px 12px 2px; background: #474747; font-size: 14px; } #messages li.mine { margin-left: auto; border-radius: 12px 12px 2px 12px; background: linear-gradient(90deg, #c26101, #e38402); } #messages small { display: block; margin-bottom: 3px; color: #bbb; font-size: 11px; } #messages .mine small { color: #ffe2bd; }
+        form { display: flex; gap: 10px; padding: 20px 30px; border-top: 1px solid #484848; } input { min-width: 0; border: 0; border-radius: 7px; padding: 12px; font: inherit; } #to { width: 130px; } #message { flex: 1; } button { border: 0; border-radius: 7px; padding: 0 20px; color: #fff; background: linear-gradient(90deg, #c26101, #e38402); font: inherit; cursor: pointer; } button:hover { opacity: .85; }
+        @media (max-width: 700px) { .layout { grid-template-columns: 1fr; height: auto; min-height: calc(100vh - 120px); margin: 25px auto; } aside { border-right: 0; border-bottom: 1px solid #484848; } #users { display: flex; gap: 5px; flex-wrap: wrap; } #users li { margin: 0; } form { flex-wrap: wrap; } #to { width: 100%; } button { min-height: 45px; } }
+    </style>
+</head>
+<body>
+    <header><h1>Just a <span>Simple Chat</span> :)</h1><a href="/logout">Log out</a></header>
+    <main class="layout">
+        <aside><h2>Connected <span>users</span></h2><ul id="users"></ul></aside>
+        <section>
+            <div class="room-title"><h2>Chat room</h2><p>Signed in as {{.}}</p></div>
+            <ul id="messages" aria-live="polite"></ul>
+            <form id="message-form">
+                <input id="to" type="text" placeholder="To (e.g. Barney)" required />
+                <input id="message" type="text" placeholder="Write a message..." autocomplete="off" required />
+                <button type="submit">Send</button>
             </form>
-        </footer>
-        <div>
-            <h2><a href="/logout">log out</a></h2>
-        </div>
-    </body>
+        </section>
+    </main>
+    <script>
+        const username = {{printf "%q" .}};
+        const messages = document.getElementById("messages");
+        const users = document.getElementById("users");
+        const socketProtocol = location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(`${socketProtocol}://${location.host}/room/ws`);
+        socket.onmessage = ({ data }) => {
+            const event = JSON.parse(data);
+            if (event.type === "state") { event.messages.forEach(addMessage); renderUsers(event.users); }
+            if (event.type === "message") addMessage(event.message);
+            if (event.type === "users") renderUsers(event.users);
+        };
+        socket.onclose = () => { document.querySelector(".room-title p").textContent = "Connection closed. Refresh to reconnect."; };
+        function addMessage(message) {
+            const item = document.createElement("li");
+            if (message.from === username) item.className = "mine";
+            const author = document.createElement("small"); author.textContent = `${message.from} → ${message.to}`;
+            item.append(author, document.createTextNode(message.message)); messages.appendChild(item); messages.scrollTop = messages.scrollHeight;
+        }
+        function renderUsers(connected) { users.replaceChildren(...connected.map(name => { const item = document.createElement("li"); item.textContent = name; return item; })); }
+        document.getElementById("message-form").addEventListener("submit", event => { event.preventDefault(); const to = document.getElementById("to"); const message = document.getElementById("message"); if (socket.readyState !== WebSocket.OPEN) return; socket.send(JSON.stringify({ type: "message", to: to.value.trim(), message: message.value.trim() })); message.value = ""; message.focus(); });
+    </script>
+</body>
 </html>
