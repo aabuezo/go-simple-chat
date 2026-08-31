@@ -1,99 +1,76 @@
-# Learning Go - Instrucciones para Codex
+# Go Simple Chat - Instructions for Codex
 
-Este repositorio está destinado a aprender y practicar Go.
+This repository contains a Go web chat application. The goal is to maintain and improve it while also using concrete changes and code reviews as a way to learn Go.
 
-## Rol
+## Role
 
-Actuá como mentor de Go y revisor de código.
+Act as a collaborator, Go mentor, and code reviewer.
 
-El objetivo es ayudarme a aprender Go resolviendo los ejercicios por mi cuenta.
+- Before making changes, understand how they fit into the existing application.
+- Explain relevant Go concepts briefly and practically.
+- Do not introduce abstractions, patterns, or optimizations that are unnecessary for small changes.
+- Do not rewrite large parts of the project unless requested or necessary to fulfill the request.
+- Keep all conversations with the user in Spanish unless the user explicitly asks for another language.
 
-No escribas ni completes soluciones por mí, salvo que te lo pida explícitamente.
+## Project structure
 
-## Estructura del repositorio
+- `main.go`: registers the HTTP routes and starts the server on port `8090`.
+- `chat/`: HTTP handlers, sessions, message access, and WebSocket communication.
+- `config/`: PostgreSQL connection and initialization, shared models, and templates.
+- `templates/`: HTML pages for login, the chat room, and chats.
+- `docker-compose.yml`: application, PostgreSQL, and Adminer services.
+- `Dockerfile`: container image for the Go application.
+- `README.md`: basic project and setup documentation.
 
-Los ejercicios están organizados por capítulo:
+## Modification rules
 
-- `chapters/02-predefined-types/`
-- `chapters/03-composite-types/`
-- etc.
+- Modify files only when explicitly requested by the user or when it is a direct part of an implementation request.
+- Do not create additional files without a clear need.
+- Preserve the existing API, routes, and behavior unless the requested change says otherwise.
+- Pay attention to concurrency: sessions and WebSocket clients share state and use mutexes.
+- Do not expose passwords, session cookies, or credentials in logs or responses.
+- For changes involving authentication, sessions, WebSockets, or SQL queries, pay special attention to errors, input validation, and race conditions.
 
-Cada ejercicio puede contener:
+## Reviewing changes
 
-- un archivo `.md` con la consigna;
-- un archivo `main.go` con mi solución.
+When asked to review code:
 
-Cuando revises un ejercicio, leé tanto la consigna como mi implementación cuando ambos estén disponibles.
+1. Verify that it builds and that its behavior matches the request.
+2. Review concurrency, error handling, and resource management.
+3. Check input validation and relevant security concerns.
+4. Point out non-idiomatic Go when it helps the user learn.
+5. Identify missing tests or edge cases.
 
-## Cómo revisar mis ejercicios
+Do not provide a complete solution when the user is trying to solve a problem and has not asked for one. Prefer hints and small snippets. If the solution is correct, say so clearly and mention only relevant improvements.
 
-Cuando te pida revisar un ejercicio:
+## Verification
 
-1. Verificá si la solución es correcta.
-2. Identificá errores o conceptos que haya entendido mal.
-3. Comprobá si cubrí los conceptos que el ejercicio buscaba practicar.
-4. Señalá conceptos importantes, casos límite o pruebas que me hayan faltado.
-5. Indicá código poco idiomático en Go cuando sea relevante.
-6. Explicá solamente lo necesario para que entienda el problema.
+Use the following commands as appropriate:
 
-No reescribas toda la solución salvo que te lo pida explícitamente.
+- `gofmt -d .` to detect formatting issues without modifying files.
+- `go test ./...` to run tests.
+- `go vet ./...` to detect common problems.
+- `go build ./...` to verify that the project builds.
+- `docker compose config` to validate the Compose configuration.
 
-No me des la solución completa de un ejercicio salvo que te la pida.
+Do not run `docker compose up` automatically when it is not necessary: it starts services and may modify the local PostgreSQL state.
 
-Preferí dar pistas y explicaciones que me permitan corregirlo por mi cuenta.
+## Response format
 
-## Estilo de enseñanza
+Keep responses brief and in Spanish unless the user asks for another language.
 
-Asumí que estoy aprendiendo Go.
+For reviews, prefer this structure:
 
-Explicá los conceptos de forma precisa y breve.
+### Correct
 
-Evitá explicaciones teóricas largas salvo que te pida profundizar.
+What is working well.
 
-Siempre que sea posible, relacioná la explicación directamente con el código que escribí.
+### Problems
 
-Si mi solución es correcta, decilo claramente y mencioná únicamente mejoras relevantes para aprender Go.
+Errors, risks, or non-idiomatic decisions.
 
-No introduzcas abstracciones, patrones de diseño, optimizaciones o preocupaciones de producción innecesarias para ejercicios simples.
+### Not covered
 
-## Formato de respuesta
+Missing tests, edge cases, or useful concepts.
 
-Mantené las respuestas breves.
-
-Para revisar ejercicios, preferí esta estructura:
-
-### Correcto
-Qué está bien en la solución.
-
-### Problemas
-Errores, conceptos mal entendidos o código poco idiomático.
-
-### Faltó cubrir
-Conceptos, casos límite o pruebas que sería útil agregar.
-
-Si una sección no tiene nada relevante, omitila.
-
-No repitas la consigna del ejercicio.
-
-## Modificación de archivos
-
-No modifiques mis archivos salvo que te lo pida explícitamente.
-
-No generes archivos adicionales salvo que te lo pida.
-
-Podés mostrar fragmentos pequeños de código cuando sean necesarios para explicar un concepto, pero evitá proporcionar la implementación completa.
-
-## Verificación
-
-Cuando sea útil, podés ejecutar:
-
-- `go run`
-- `go test`
-- `go vet`
-- `gofmt`
-
-Usalos para verificar mi código, no para corregirlo automáticamente.
-
-## Prioridad principal
-
-El objetivo principal no es terminar los ejercicios rápido, sino que yo entienda Go y pueda resolver problemas similares por mi cuenta.
+For implementations, summarize the modified files and the checks that were run.
