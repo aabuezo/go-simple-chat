@@ -154,22 +154,6 @@ func broadcastMessage(message TextMessage) {
 	log.Printf("broadcast message to %d websocket clients", delivered)
 }
 
-func connectedUsers() []string {
-	room.RLock()
-	defer room.RUnlock()
-	users := make([]string, 0, len(room.clients))
-	seen := make(map[string]struct{})
-	for c := range room.clients {
-		if _, exists := seen[c.username]; exists {
-			continue
-		}
-		seen[c.username] = struct{}{}
-		users = append(users, c.username)
-	}
-	sort.Strings(users)
-	return users
-}
-
 func connectedContacts() []Contact {
 	online := make(map[string]bool)
 	room.RLock()
@@ -185,15 +169,6 @@ func connectedContacts() []Contact {
 	}
 	sort.Slice(contacts, func(i, j int) bool { return contacts[i].Username < contacts[j].Username })
 	return contacts
-}
-
-func currentMessages(username string) []TextMessage {
-	user := GetUser(username)
-	messages := messageIDsToText(GetMessages(user, user))
-	for i := range messages {
-		messages[i].Mine = messages[i].From == username
-	}
-	return messages
 }
 
 func conversationMessages(username, other string) []TextMessage {

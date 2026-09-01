@@ -86,17 +86,6 @@ func PostLogin(w http.ResponseWriter, req *http.Request) {
 	config.TPL.ExecuteTemplate(w, "login.htm", nil)
 }
 
-func alreadyLoggedIn(username string) bool {
-	sessionMu.RLock()
-	defer sessionMu.RUnlock()
-	for _, activeUsername := range Sessions {
-		if activeUsername == username {
-			return true
-		}
-	}
-	return false
-}
-
 // Authenticate searches for the user in the DB and verfies that the provided
 // username and password are valid
 func Authenticate(username, password string) bool {
