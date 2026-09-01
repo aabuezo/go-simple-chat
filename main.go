@@ -1,12 +1,20 @@
 package main
 
 import (
+	"embed"
 	"net/http"
 
 	"github.com/aabuezo/go-simple-chat/chat"
+	"github.com/aabuezo/go-simple-chat/config"
 )
 
+// templateFiles contains the HTML templates inside the application binary.
+//
+//go:embed templates/*
+var templateFiles embed.FS
+
 func main() {
+	config.InitTemplates(templateFiles)
 
 	http.HandleFunc("/", chat.GetHome)
 	http.HandleFunc("/login", chat.PostLogin)

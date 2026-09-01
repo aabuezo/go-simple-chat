@@ -27,7 +27,7 @@
             </div>
         </main>
     </div>
-    <div id="toast" class="pointer-events-none fixed right-5 top-5 z-50 hidden max-w-sm rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"></div>
+    <div id="toast" class="pointer-events-none fixed right-5 top-5 z-50 hidden max-w-sm rounded-2xl border border-orange-400 bg-gradient-to-r from-brand-600 to-orange-500 px-4 py-3 text-sm font-medium text-white shadow-xl shadow-orange-500/30"></div>
     <script>
         const username = {{printf "%q" .}}, messages = document.getElementById("messages"), users = document.getElementById("users"), connection = document.getElementById("connection"), mobileConnection = document.getElementById("mobile-connection"), themeIcon = document.getElementById("theme-icon"), recipient = document.getElementById("recipient"), send = document.getElementById("send");
         let selectedRecipient = "";

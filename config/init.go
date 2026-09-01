@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 	"html/template"
+	"io/fs"
 	"log"
 	"time"
 
@@ -58,8 +59,8 @@ func InitDB() {
 	// CreateMessages()
 }
 
-func init() {
-	TPL = template.Must(template.ParseGlob("templates/*"))
+func InitTemplates(files fs.FS) {
+	TPL = template.Must(template.ParseFS(files, "templates/*"))
 }
 
 func CreateTableUsers() {
