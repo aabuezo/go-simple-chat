@@ -12,26 +12,6 @@ A small real-time chat application built with Go, PostgreSQL, HTTP handlers, HTM
 - Dark and light UI themes.
 - Docker Compose setup with PostgreSQL and Adminer.
 
-## Screenshots
-
-### Login
-
-![Simple Chat login screen](screenshots/login.png)
-
-### Chat room — dark theme
-
-![Simple Chat dark chat room](screenshots/conversation1.png)
-
-### New message notification
-
-![Simple Chat new message notification](screenshots/conversation2.png)
-
-### Chat room — light theme
-
-![Simple Chat light chat room](screenshots/fondo_blanco.png)
-
-Screenshots are stored in the [`screenshots/`](screenshots/) directory.
-
 ## Requirements
 
 - Docker and Docker Compose, or
@@ -104,6 +84,10 @@ go vet ./...
 go build ./...
 gofmt -d .
 ```
+
+## Design
+
+See [`DESIGN.md`](DESIGN.md) for screenshots and the project's visual guidelines, color palette, themes, typography, and UI conventions.
 
 ## License
 
